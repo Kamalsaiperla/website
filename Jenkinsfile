@@ -6,7 +6,28 @@ pipeline {
         LOCATION = 'us-east1-d'
         CREDENTIALS_ID = 'gke'
     }
+    pipeline {
+    agent any
 
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building..'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Testing..'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying....'
+            }
+        }
+    }
+}
+/*
     stages {
         stage("Checkout code") {
             steps {
@@ -38,3 +59,4 @@ pipeline {
         }
     }    
 }
+*/
