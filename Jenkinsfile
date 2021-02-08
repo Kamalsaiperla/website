@@ -1,33 +1,40 @@
-node {
-    def app
-
-    stage('Clone repository') {
-        /* Cloning the Repository to our Workspace */
-
-        checkout scm
+pipeline {
+    agent any
+    environment {
+        PROJECT_ID = 'rosy-petal-304002'
+        CLUSTER_NAME = 'jenkins-cd'
+        LOCATION = 'us-east1-d'
+        CREDENTIALS_ID = 'gke'
     }
 
-    stage('Build image') {
-        /* This builds the actual image */
-
-        app = docker.build("kamalsaiperla/website")
-    }
-
-    stage('Test image') {
-        
-        app.inside {
-            echo "Tests passed"
+    stages {
+        stage("Checkout code") {
+            steps {
+                checkout scm
+            }
         }
-    }
-
-    stage('Push image') {
-        /* 
-			You would need to first register with DockerHub before you can push images to your account
-		*/
-        docker.withRegistry('https://registry.hub.docker.com', 'docker-hub') {
-            app.push("${env.BUILD_NUMBER}")
-            app.push("latest")
-            } 
-                echo "Trying to Push Docker Build to DockerHub"
-    }
+        stage("Build image") {
+            steps {
+                script {
+                    myapp = docker.build("DOCKER-HUB-USERNAME/hello:${env.BUILD_ID}")
+                }
+            }
+        }
+        stage("Push image") {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
+                            myapp.push("latest")
+                            myapp.push("${env.BUILD_ID}")
+                    }
+                }
+            }
+        }        
+        stage('Deploy to GKE') {
+            steps{
+                sh "sed -i 's/hello:latest/hello:${env.BUILD_ID}/g' deployment.yaml"
+                step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'deployment.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
+            }
+        }
+    }    
 }
