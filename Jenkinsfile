@@ -6,9 +6,6 @@ pipeline {
         LOCATION = 'us-east1-d'
         CREDENTIALS_ID = 'gke'
     }
-    pipeline {
-    agent any
-
     stages {
         stage('Build') {
             steps {
