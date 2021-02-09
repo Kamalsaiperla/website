@@ -23,6 +23,15 @@ pipeline {
             }
         }
     }
+    stage 'Build image'
+    sh("docker build -t ${imageTag} .")
+
+    stage 'Run tests'
+    sh("docker images")
+
+    stage 'Push image to registry'
+    sh("gcloud docker -- push ${imageTag}")
+
 }
 /*
     stages {
