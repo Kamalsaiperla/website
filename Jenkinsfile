@@ -1,4 +1,47 @@
-pipeline {
+pipeline{
+    /* specify nodes for executing */
+    agent any
+    stages{
+        /* checkout repo */
+        stage('Checkout SCM') {
+            steps {
+                checkout scm
+            }
+        }
+	stage("Build image") {
+            steps {
+                script {
+                    myapp = docker.build("gcr.io/rosy-petal-304002/sample_website:${env.BUILD_ID}")
+                }
+            }
+        }
+        stage("Push image") {
+            steps {
+                script {
+                    docker.withRegistry('https://us.gcr.io', 'gcr:google-container-registry-project') {
+                            myapp.push("latest")
+                            myapp.push("${env.BUILD_ID}")
+                    }
+                }
+            }
+        } 
+         stage('Do the deployment') {
+            steps {
+                echo ">> Run deploy applications "
+            }
+        }
+
+    }
+ 
+    /* Cleanup workspace */
+    post {
+       always {
+           deleteDir()
+       }
+   }
+}
+
+/*pipeline {
     agent any
     environment {
         PROJECT_ID = 'rosy-petal-304002'
